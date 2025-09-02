@@ -9,7 +9,9 @@ useEffect(() => {
   const fetchBusinessData = async () => {
     try {
       const response = await axios.get(
-        "http://localhost/gr8-onboardingform/submit_business_info/get_business_info.php"
+        "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_business_info/get_business_info.php"
+        // "http://localhost/gr8-onboardingform/submit_business_info/get_business_info.php"
+        // "https://gr8nepal.com/gr8-onboardingform/submit_business_info/get_business_info.php"
       );
       console.log("API Response:", response.data); // 👈 Add this line
       setBusinessList(response.data);

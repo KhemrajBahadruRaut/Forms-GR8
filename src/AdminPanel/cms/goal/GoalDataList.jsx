@@ -6,7 +6,9 @@ const GoalDataList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get("http://localhost/gr8-onboardingform/submit_goals_info/get_goals_info.php")
+    axios.get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_goals_info/get_goals_info.php")
+    // axios.get("http://localhost/gr8-onboardingform/submit_goals_info/get_goals_info.php")
+    // axios.get("https://gr8nepal.com/gr8-onboardingform/submit_goals_info/get_goals_info.php")
       .then((res) => {
         setGoalsList(res.data);
         setLoading(false);

@@ -7,7 +7,9 @@ const BrandVoiceList = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost/gr8-onboardingform/submit_brand_voice/get_brand_voice.php")
+      .get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_brand_voice/get_brand_voice.php")
+      // .get("http://localhost/gr8-onboardingform/submit_brand_voice/get_brand_voice.php")
+      // .get("https://gr8nepal.com/gr8-onboardingform/submit_brand_voice/get_brand_voice.php")
       .then((res) => {
         setBrandList(res.data);
         setLoading(false);

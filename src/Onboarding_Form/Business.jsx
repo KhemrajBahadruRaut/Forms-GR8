@@ -1,26 +1,74 @@
-import React from "react";
-import PhoneInput from "react-phone-number-input";
+import React, { useState, useEffect } from "react";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import axios from "axios";
 
-const Business = ({ data, updateData }) => {
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_business_info/submit_business_info.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("Business information submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
+const Business = ({ data, updateData, setStepValidity }) => {
+  const [errors, setErrors] = useState({});
+
+  // Validation rules
+  const validateField = (name, value) => {
+    let error = "";
+
+    if (name === "businessName") {
+      if (!value) error = "Business name is required";
+      else if (!/^[A-Za-z\s.,&'-]+$/.test(value)) {
+        error = "Only letters are allowed";
+      }
     }
+
+    if (name === "location") {
+      if (!value) error = "Location is required";
+      else if (!/^[A-Za-z0-9\s.,&'-]+$/.test(value)) {
+        error = "Only letters, numbers & , . & - allowed";
+      }
+    }
+
+    if (name === "zipCode") {
+      if (!value) error = "Zip code is required";
+      else if (!/^\d{1,10}$/.test(value)) {
+        error = "Zip code must be digits only (max 10)";
+      }
+    }
+
+    if (name === "email") {
+      if (!value) error = "Email is required";
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = "Invalid email format";
+      }
+    }
+
+    if (name === "phoneNumber" || name === "contactNumber") {
+      if (!value) error = "Phone number is required";
+      else if (!isValidPhoneNumber(value)) {
+        error = "Invalid phone number format";
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Check overall validity whenever data or errors change
+  useEffect(() => {
+    const requiredFields = [
+      "businessName",
+      "location",
+      "zipCode",
+      "phoneNumber",
+      "email",
+      "contactName",
+      "contactNumber",
+    ];
+
+    const isValid = requiredFields.every(
+      (field) => data[field] && !errors[field]
+    );
+
+    setStepValidity(isValid);
+  }, [data, errors, setStepValidity]);
+
+  const handleChange = (name, value) => {
+    updateData({ [name]: value });
+    validateField(name, value);
   };
 
   return (
@@ -37,10 +85,11 @@ const Business = ({ data, updateData }) => {
             id="businessName"
             type="text"
             value={data.businessName || ""}
-            onChange={(e) => updateData({ businessName: e.target.value })}
+            onChange={(e) => handleChange("businessName", e.target.value)}
             className="w-full border rounded-md p-2"
             placeholder="Business Name"
           />
+          {errors.businessName && <p className="text-red-500 text-sm">{errors.businessName}</p>}
         </div>
 
         {/* Location */}
@@ -52,9 +101,10 @@ const Business = ({ data, updateData }) => {
             id="location"
             type="text"
             value={data.location || ""}
-            onChange={(e) => updateData({ location: e.target.value })}
+            onChange={(e) => handleChange("location", e.target.value)}
             className="w-full border rounded-md p-2"
           />
+          {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
         </div>
 
         {/* Zip Code */}
@@ -66,9 +116,10 @@ const Business = ({ data, updateData }) => {
             id="zipCode"
             type="text"
             value={data.zipCode || ""}
-            onChange={(e) => updateData({ zipCode: e.target.value })}
+            onChange={(e) => handleChange("zipCode", e.target.value)}
             className="w-full border rounded-md p-2"
           />
+          {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
         </div>
 
         {/* Phone Number */}
@@ -79,10 +130,11 @@ const Business = ({ data, updateData }) => {
           <PhoneInput
             placeholder="Phone number"
             value={data.phoneNumber || ""}
-            onChange={(value) => updateData({ phoneNumber: value })}
+            onChange={(value) => handleChange("phoneNumber", value)}
             defaultCountry="NP"
             className="border rounded-md p-2"
           />
+          {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
         </div>
 
         {/* Email */}
@@ -94,13 +146,14 @@ const Business = ({ data, updateData }) => {
             id="email"
             type="email"
             value={data.email || ""}
-            onChange={(e) => updateData({ email: e.target.value })}
+            onChange={(e) => handleChange("email", e.target.value)}
             className="w-full border rounded-md p-2"
             placeholder="abc@example.com"
           />
+          {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
         </div>
 
-        {/* Website */}
+        {/* Website (optional) */}
         <div>
           <label htmlFor="website" className="block mb-1 text-sm font-medium">
             Website
@@ -123,7 +176,7 @@ const Business = ({ data, updateData }) => {
             id="contactName"
             type="text"
             value={data.contactName || ""}
-            onChange={(e) => updateData({ contactName: e.target.value })}
+            onChange={(e) => handleChange("contactName", e.target.value)}
             className="w-full border rounded-md p-2"
           />
         </div>
@@ -136,19 +189,13 @@ const Business = ({ data, updateData }) => {
           <PhoneInput
             placeholder="Contact number"
             value={data.contactNumber || ""}
-            onChange={(value) => updateData({ contactNumber: value })}
+            onChange={(value) => handleChange("contactNumber", value)}
             defaultCountry="NP"
             className="border rounded-md p-2"
           />
+          {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
         </div>
       </div>
-
-      <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
     </section>
   );
 };

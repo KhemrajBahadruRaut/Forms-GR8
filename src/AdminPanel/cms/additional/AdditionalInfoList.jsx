@@ -7,7 +7,9 @@ const AdditionalInfoList = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost/gr8-onboardingform/submit_additional_info/get_additional_info.php")
+      // .get("http://localhost/gr8-onboardingform/submit_additional_info/get_additional_info.php")
+      .get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_additional_info/get_additional_info.php")
+      // .get("https://gr8nepal.com/gr8-onboardingform/submit_additional_info/get_additional_info.php")
       .then((res) => {
         setEntries(res.data);
         setLoading(false);

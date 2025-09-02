@@ -17,7 +17,7 @@ const Navbar = () => {
           </a>
 
           {/* Mobile menu button */}
-          <button
+          {/* <button
             type="button"
             className="inline-flex items-center p-2 text-sm text-gray-500 md:hidden hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-200"
             aria-controls="navbar-default"
@@ -32,10 +32,10 @@ const Navbar = () => {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </button>
+          </button> */}
 
           {/* Nav Links */}
-          <div className="hidden md:flex space-x-6">
+          {/* <div className="hidden md:flex space-x-6">
             {['Home', 'About', 'Services', 'Pricing', 'Contact'].map((item) => (
               <a
                 key={item}
@@ -45,6 +45,9 @@ const Navbar = () => {
                 {item}
               </a>
             ))}
+          </div> */}
+          <div>
+             Onboarding Form
           </div>
         </nav>
       </div>

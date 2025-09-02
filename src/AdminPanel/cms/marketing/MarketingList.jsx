@@ -7,7 +7,9 @@ const MarketingList = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost/gr8-onboardingform/submit_marketing_info/get_marketing_info.php")
+      .get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_marketing_info/get_marketing_info.php")
+      // .get("http://localhost/gr8-onboardingform/submit_marketing_info/get_marketing_info.php")
+      // .get("https://gr8nepal.com/gr8-onboardingform/submit_marketing_info/get_marketing_info.php")
       .then((res) => {
         setMarketingData(res.data);
         setLoading(false);

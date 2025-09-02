@@ -1,25 +1,7 @@
-import axios from "axios";
-import React from "react";
+
 
 const Additional = ({ data, setData }) => {
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_additional_info/submit_additional_info.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("Business information submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
-    }
-  };
+
 
   return (
     
@@ -105,12 +87,6 @@ const Additional = ({ data, setData }) => {
           </div>
         </div>
       </section>
-      <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
     </div>
   );
 };

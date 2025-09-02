@@ -5,7 +5,9 @@ const WorkflowList = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost/gr8-onboardingform/submit_workflow_info/get_workflow_info.php")
+    fetch("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_workflow_info/get_workflow_info.php")
+    // fetch("http://localhost/gr8-onboardingform/submit_workflow_info/get_workflow_info.php")
+    // fetch("https://gr8nepal.com/gr8-onboardingform/submit_workflow_info/get_workflow_info.php")
       .then((res) => res.json())
       .then((data) => {
         setWorkflowList(data);

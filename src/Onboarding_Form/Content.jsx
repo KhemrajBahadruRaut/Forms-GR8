@@ -1,42 +1,42 @@
-import axios from "axios";
 import React, { useState, useEffect } from "react";
 
-const Content = ({ data, updateData }) => {
+const Content = ({ data, updateData, setStepValidity }) => {
   const [selectedTypes, setSelectedTypes] = useState(data?.selectedContentTypes || []);
   const [otherContent, setOtherContent] = useState(data?.otherContentType || "");
+  const [errors, setErrors] = useState({});
 
-  
+  // Update parent data whenever selections change
   useEffect(() => {
     updateData({
       selectedContentTypes: selectedTypes,
       otherContentType: otherContent,
     });
-  }, [selectedTypes, otherContent, updateData]);
+
+    // Validation: at least one type must be selected
+    const isValid =
+      selectedTypes.length > 0 &&
+      (!selectedTypes.includes("Others") || (otherContent?.trim().length > 0));
+
+    setStepValidity(isValid);
+
+    setErrors({
+      selectedTypes: selectedTypes.length === 0 ? "Please select at least one content type." : "",
+      otherContent:
+        selectedTypes.includes("Others") && otherContent.trim() === ""
+          ? "Please specify the other content type."
+          : "",
+    });
+  }, [selectedTypes, otherContent, updateData, setStepValidity]);
 
   const handleTypeChange = (e) => {
     const { value, checked } = e.target;
-    setSelectedTypes((prev) =>
-      checked ? [...prev, value] : prev.filter((v) => v !== value)
-    );
+    setSelectedTypes((prev) => (checked ? [...prev, value] : prev.filter((v) => v !== value)));
   };
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_content_info/submit_content_info.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("Business information submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
-    }
+
+  const handleOtherChange = (e) => {
+    setOtherContent(e.target.value);
   };
+
   return (
     <section>
       <h2 className="text-2xl font-semibold mb-4">Content Preferences</h2>
@@ -76,26 +76,21 @@ const Content = ({ data, updateData }) => {
           ))}
         </div>
 
+        {errors.selectedTypes && <p className="text-red-500 text-sm">{errors.selectedTypes}</p>}
+
         {selectedTypes.includes("Others") && (
           <div className="mt-3">
-            <label className="block mb-1 text-sm font-medium">
-              Please specify other content types:
-            </label>
+            <label className="block mb-1 text-sm font-medium">Please specify other content types:</label>
             <textarea
               rows={1}
               value={otherContent}
-              onChange={(e) => setOtherContent(e.target.value)}
+              onChange={handleOtherChange}
               className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
             />
+            {errors.otherContent && <p className="text-red-500 text-sm">{errors.otherContent}</p>}
           </div>
         )}
       </div>
-      <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
     </section>
   );
 };

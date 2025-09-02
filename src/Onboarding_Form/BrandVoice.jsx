@@ -1,37 +1,56 @@
-import axios from "axios";
+import React, { useEffect, useState } from "react";
 
-const BrandVoice = ({ data, updateData }) => {
+const BrandVoice = ({ data, updateData, setStepValidity }) => {
+  const [errors, setErrors] = useState({});
+
+  const validateField = (name, value) => {
+    let error = "";
+
+    // Require at least one voice selection
+    if (name === "selectedVoices" && (!value || value.length === 0)) {
+      error = "Please select at least one tone/voice.";
+    }
+
+    // If "Others" is selected, require non-empty input
+    if (name === "otherVoice" && (data.selectedVoices || []).includes("Others")) {
+      if (!value || value.trim() === "") {
+        error = "Please specify the other tone/voice.";
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // Step is valid if selectedVoices has at least one selection and otherVoice is filled if "Others" is selected
+    const isValid =
+      (data.selectedVoices?.length > 0) &&
+      (!data.selectedVoices.includes("Others") || (data.otherVoice?.trim() || "").length > 0);
+
+    setStepValidity(isValid);
+  };
+
   const handleVoiceChange = (e) => {
     const { value, checked } = e.target;
     const currentVoices = data.selectedVoices || [];
     const updatedVoices = checked
       ? [...currentVoices, value]
       : currentVoices.filter((v) => v !== value);
+
     updateData({ selectedVoices: updatedVoices });
+    validateField("selectedVoices", updatedVoices);
   };
 
   const handleTextChange = (field) => (e) => {
     updateData({ [field]: e.target.value });
+    validateField(field, e.target.value);
   };
 
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_brand_voice/submit_brand_voice.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("Business information submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
+  // Run validation on mount to restore localStorage values
+  useEffect(() => {
+    validateField("selectedVoices", data.selectedVoices || []);
+    if ((data.selectedVoices || []).includes("Others")) {
+      validateField("otherVoice", data.otherVoice || "");
     }
-  };
+  }, []);
 
   return (
     <section>
@@ -44,29 +63,27 @@ const BrandVoice = ({ data, updateData }) => {
             What tone/voice should be used in your content?
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {[
-              "Friendly",
-              "Professional",
-              "Humorous",
-              "Inspirational",
-              "Informative",
-              "Others",
-            ].map((voice) => (
-              <label
-                key={voice}
-                className="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  value={voice}
-                  checked={(data.selectedVoices || []).includes(voice)}
-                  onChange={handleVoiceChange}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm">{voice}</span>
-              </label>
-            ))}
+            {["Friendly", "Professional", "Humorous", "Inspirational", "Informative", "Others"].map(
+              (voice) => (
+                <label
+                  key={voice}
+                  className="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    value={voice}
+                    checked={(data.selectedVoices || []).includes(voice)}
+                    onChange={handleVoiceChange}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="ml-2 text-sm">{voice}</span>
+                </label>
+              )
+            )}
           </div>
+          {errors.selectedVoices && (
+            <p className="text-red-500 text-sm mt-1">{errors.selectedVoices}</p>
+          )}
 
           {(data.selectedVoices || []).includes("Others") && (
             <div className="mt-3">
@@ -79,6 +96,9 @@ const BrandVoice = ({ data, updateData }) => {
                 onChange={handleTextChange("otherVoice")}
                 className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
               />
+              {errors.otherVoice && (
+                <p className="text-red-500 text-sm mt-1">{errors.otherVoice}</p>
+              )}
             </div>
           )}
         </div>
@@ -110,12 +130,6 @@ const BrandVoice = ({ data, updateData }) => {
             placeholder="e.g., competitor names, sensitive topics..."
           />
         </div>
-        <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
       </div>
     </section>
   );

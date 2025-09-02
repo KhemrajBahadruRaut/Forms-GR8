@@ -1,18 +1,28 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import OnboardingForm from '../Onboarding_Form/OnboardingForm';
-import AdminPanel from '../../AdminPanel/AdminPanel';
+import AdminPanel from "../AdminPanel/AdminPanel";
+import ProtectedRoute from "./ProtectedRoute";
+import AdminLogin from "../AdminPanel/adminLogin/AdminLoigin";
 
 const MyRoutes = () => {
   return (
-   <>
-   <BrowserRouter>
-   <Routes>
-   <Route path="/" element={<OnboardingForm />} />
-   <Route path='/admin' element={<AdminPanel/>}/>
-    </Routes>
-   </BrowserRouter>
-   </>
-  )
-}
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<OnboardingForm />} />
+        <Route
+          path="/admin-dashboard"
+          element={
+            <ProtectedRoute>
+              <AdminPanel />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/admin/*" element={<AdminLogin />} />
+        {/* <Route path="/dash/*" element={<AdminPanel />} /> */}
 
-export default MyRoutes
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+export default MyRoutes;

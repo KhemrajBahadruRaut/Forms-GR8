@@ -1,37 +1,69 @@
-import axios from "axios";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
-const Goal = ({ data, updateData }) => {
+const Goal = ({ data, updateData, setStepValidity }) => {
+  const [errors, setErrors] = useState({});
+
+  const validateField = (name, value) => {
+    let error = "";
+
+    if (name === "selectedGoals") {
+      if (value.length === 0) {
+        error = "Please select at least one goal.";
+      }
+    }
+
+    if (name === "otherGoalDetails") {
+      if (value && !/^[A-Za-z\s]+$/.test(value)) {
+        error = "Only letters and spaces are allowed.";
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // 🔹 Determine if whole step is valid
+    let isValid = true;
+
+    if ((data.selectedGoals || []).length === 0) {
+      isValid = false;
+    }
+
+    if ((data.selectedGoals || []).includes("Others")) {
+      if (!data.otherGoalDetails || !/^[A-Za-z\s]+$/.test(data.otherGoalDetails)) {
+        isValid = false;
+      }
+    }
+
+    if (error) {
+      isValid = false;
+    }
+
+    setStepValidity(isValid);
+  };
+
   const handleCheckboxChange = (e) => {
     const { value, checked } = e.target;
     const currentGoals = data.selectedGoals || [];
-    
+
     const updatedGoals = checked
       ? [...currentGoals, value]
       : currentGoals.filter((goal) => goal !== value);
 
-    updateData({
-      selectedGoals: updatedGoals,
-    });
+    updateData({ selectedGoals: updatedGoals });
+    validateField("selectedGoals", updatedGoals);
   };
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_goals_info/submit_goals_info.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("Business information submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
+
+  const handleChange = (name, value) => {
+    updateData({ [name]: value });
+    validateField(name, value);
+  };
+
+  // ✅ Run validation on mount (helps restore localStorage data)
+  useEffect(() => {
+    validateField("selectedGoals", data.selectedGoals || []);
+    if ((data.selectedGoals || []).includes("Others")) {
+      validateField("otherGoalDetails", data.otherGoalDetails || "");
     }
-  };
+  }, []);
 
   return (
     <section>
@@ -74,6 +106,10 @@ const Goal = ({ data, updateData }) => {
             ))}
           </div>
 
+          {errors.selectedGoals && (
+            <p className="text-red-500 text-sm mt-1">{errors.selectedGoals}</p>
+          )}
+
           {(data.selectedGoals || []).includes("Others") && (
             <div className="mt-4">
               <label className="block mb-1 text-sm font-medium">
@@ -82,19 +118,16 @@ const Goal = ({ data, updateData }) => {
               <textarea
                 rows="3"
                 value={data.otherGoalDetails || ""}
-                onChange={(e) => updateData({ otherGoalDetails: e.target.value })}
+                onChange={(e) => handleChange("otherGoalDetails", e.target.value)}
                 className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
                 placeholder="Describe your goals..."
               ></textarea>
+              {errors.otherGoalDetails && (
+                <p className="text-red-500 text-sm mt-1">{errors.otherGoalDetails}</p>
+              )}
             </div>
           )}
         </div>
-        <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
       </div>
     </section>
   );

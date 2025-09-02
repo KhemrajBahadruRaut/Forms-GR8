@@ -7,7 +7,9 @@ const ContentDataList = () => {
 
   useEffect(() => {
     axios
-      .get("http://localhost/gr8-onboardingform/submit_content_info/get_content_info.php")
+      .get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_content_info/get_content_info.php")
+      // .get("http://localhost/gr8-onboardingform/submit_content_info/get_content_info.php")
+      // .get("https://gr8nepal.com/gr8-onboardingform/submit_content_info/get_content_info.php")
       .then((res) => {
         setContentList(res.data);
         setLoading(false);

@@ -1,7 +1,27 @@
-import axios from "axios";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const Target = ({ data, updateData }) => {
+const Target = ({ data, updateData, setStepValidity }) => {
+  const [errors, setErrors] = useState({});
+
+  const validateField = (name, value) => {
+    let error = "";
+    if (name === "selectedAges" && (!value || value.length === 0)) {
+      error = "Please select at least one age range.";
+    }
+    if (name === "selectedGenders" && (!value || value.length === 0)) {
+      error = "Please select at least one gender.";
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: error }));
+
+    // Step is valid if ages & genders have at least one selection
+    const isValid =
+      (name === "selectedAges" ? value.length > 0 : data.selectedAges?.length > 0) &&
+      (name === "selectedGenders" ? value.length > 0 : data.selectedGenders?.length > 0);
+
+    setStepValidity(isValid);
+  };
+
   const handleAgeChange = (e) => {
     const { value, checked } = e.target;
     const currentAges = data.selectedAges || [];
@@ -9,6 +29,7 @@ const Target = ({ data, updateData }) => {
       ? [...currentAges, value]
       : currentAges.filter((v) => v !== value);
     updateData({ selectedAges: updatedAges });
+    validateField("selectedAges", updatedAges);
   };
 
   const handleGenderChange = (e) => {
@@ -18,29 +39,18 @@ const Target = ({ data, updateData }) => {
       ? [...currentGenders, value]
       : currentGenders.filter((v) => v !== value);
     updateData({ selectedGenders: updatedGenders });
+    validateField("selectedGenders", updatedGenders);
   };
 
   const handleTextChange = (field) => (e) => {
     updateData({ [field]: e.target.value });
   };
-  const handleSubmit = async () => {
-    try {
-      const response = await axios.post(
-        "http://localhost/gr8-onboardingform/submit_target_info/submit_target_info.php",
-        data,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      console.log("Server response:", response.data);
-      alert("target info submitted successfully!");
-    } catch (error) {
-      console.error("Error submitting business info:", error.response?.data || error.message);
-      alert("Error submitting the form.");
-    }
-  };
+
+  // Run validation on mount to restore localStorage values
+  useEffect(() => {
+    validateField("selectedAges", data.selectedAges || []);
+    validateField("selectedGenders", data.selectedGenders || []);
+  }, []);
 
   return (
     <section>
@@ -68,13 +78,16 @@ const Target = ({ data, updateData }) => {
               </label>
             ))}
           </div>
+          {errors.selectedAges && (
+            <p className="text-red-500 text-sm mt-1">{errors.selectedAges}</p>
+          )}
         </div>
 
         {/* Gender */}
         <div>
           <label className="block mb-2 text-sm font-medium">Gender</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {["Male", "Female", "Transgender", "Both"].map((gender) => (
+            {["Male", "Female", "Others"].map((gender) => (
               <label
                 key={gender}
                 className="flex items-center p-2 border rounded-md hover:bg-gray-50 cursor-pointer"
@@ -90,6 +103,9 @@ const Target = ({ data, updateData }) => {
               </label>
             ))}
           </div>
+          {errors.selectedGenders && (
+            <p className="text-red-500 text-sm mt-1">{errors.selectedGenders}</p>
+          )}
         </div>
 
         {/* Demographics & Interests */}
@@ -164,12 +180,6 @@ const Target = ({ data, updateData }) => {
           />
         </div>
       </div>
-      <button
-        onClick={handleSubmit}
-        className="mt-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Submit
-      </button>
     </section>
   );
 };

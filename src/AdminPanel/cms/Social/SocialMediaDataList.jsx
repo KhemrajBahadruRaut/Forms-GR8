@@ -5,7 +5,9 @@ const SocialMediaDataList = () => {
   const [list, setList] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost/gr8-onboardingform/social_media_info/get_social_info.php")
+    axios.get("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/social_media_info/get_social_info.php")
+    // axios.get("http://localhost/gr8-onboardingform/social_media_info/get_social_info.php")
+    // axios.get("https://gr8nepal.com/gr8-onboardingform/social_media_info/get_social_info.php")
       .then(res => setList(res.data))
       .catch(err => console.error("Fetch error", err));
   }, []);
