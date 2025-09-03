@@ -16,8 +16,12 @@ const Target = ({ data, updateData, setStepValidity }) => {
 
     // Step is valid if ages & genders have at least one selection
     const isValid =
-      (name === "selectedAges" ? value.length > 0 : data.selectedAges?.length > 0) &&
-      (name === "selectedGenders" ? value.length > 0 : data.selectedGenders?.length > 0);
+      (name === "selectedAges"
+        ? value.length > 0
+        : data.selectedAges?.length > 0) &&
+      (name === "selectedGenders"
+        ? value.length > 0
+        : data.selectedGenders?.length > 0);
 
     setStepValidity(isValid);
   };
@@ -51,6 +55,53 @@ const Target = ({ data, updateData, setStepValidity }) => {
     validateField("selectedAges", data.selectedAges || []);
     validateField("selectedGenders", data.selectedGenders || []);
   }, []);
+  const [countries, setCountries] = useState([]);
+  const [loadingCountries, setLoadingCountries] = useState(true);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const res = await fetch(
+          "https://restcountries.com/v3.1/all?fields=name"
+        );
+        if (!res.ok) throw new Error("Failed to fetch countries");
+
+        const json = await res.json();
+        const countryList = json
+          .map((c) => c?.name?.common)
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b));
+
+        setCountries(countryList);
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+        setCountries([]); // fallback to empty array
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+
+    fetchCountries();
+  }, []);
+
+  const interestsList = [
+    "Fitness",
+    "Technology",
+    "Business",
+    "Travel",
+    "Music",
+    "Fashion",
+    "Movies",
+    "Sports",
+    "Food",
+    "Photography",
+    "Gaming",
+    "Education",
+    "Self-Improvement",
+  ];
+  const handleChange = (e) => {
+    updateData({ targetInterests: e.target.value });
+  };
 
   return (
     <section>
@@ -104,7 +155,9 @@ const Target = ({ data, updateData, setStepValidity }) => {
             ))}
           </div>
           {errors.selectedGenders && (
-            <p className="text-red-500 text-sm mt-1">{errors.selectedGenders}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.selectedGenders}
+            </p>
           )}
         </div>
 
@@ -115,36 +168,69 @@ const Target = ({ data, updateData, setStepValidity }) => {
           </label>
           <div>
             <label className="block mb-1 text-sm font-medium">Location</label>
-            <textarea
-              rows="1"
-              value={data.targetLocation || ""}
-              onChange={handleTextChange("targetLocation")}
-              placeholder="E.g., United States, Europe..."
-              className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
-            />
+            {loadingCountries ? (
+              <p className="text-gray-500 text-sm">Loading countries...</p>
+            ) : countries.length > 0 ? (
+              <select
+                value={data.targetLocation || ""}
+                onChange={(e) => updateData({ targetLocation: e.target.value })}
+                className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
+              >
+                <option value="">Select a country</option>
+                {countries.map((country) => (
+                  <option key={country} value={country}>
+                    {country}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="text-red-500 text-sm">Could not load countries</p>
+            )}
           </div>
+          {/* Interests */}
           <div>
             <label className="block mb-1 text-sm font-medium">Interests</label>
-            <textarea
-              rows="1"
+            <select
               value={data.targetInterests || ""}
-              onChange={handleTextChange("targetInterests")}
-              placeholder="E.g., fitness, technology..."
+              onChange={handleChange}
               className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
-            />
+            >
+              <option value="">Select an interest</option>
+              {interestsList.map((interest) => (
+                <option key={interest} value={interest}>
+                  {interest}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* Profession */}
           <div>
             <label className="block mb-1 text-sm font-medium">Profession</label>
-            <textarea
-              rows="1"
+            <select
               value={data.targetProfession || ""}
-              onChange={handleTextChange("targetProfession")}
-              placeholder="E.g., entrepreneurs, students..."
+              onChange={(e) => updateData({ targetProfession: e.target.value })}
               className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
-            />
+            >
+              <option value="">Select profession</option>
+              <option value="Students">Students</option>
+              <option value="Entrepreneurs">Entrepreneurs</option>
+              <option value="Engineers">Engineers</option>
+              <option value="Doctors">Doctors</option>
+              <option value="Freelancers">Freelancers</option>
+              <option value="Teachers">Teachers</option>
+              <option value="Managers">Managers</option>
+              <option value="Designers">Designers</option>
+              <option value="Developers">Developers</option>
+              <option value="Marketers">Marketers</option>
+              <option value="Others">Others</option>
+            </select>
           </div>
+
           <div>
-            <label className="block mb-1 text-sm font-medium">Others, specify</label>
+            <label className="block mb-1 text-sm font-medium">
+              Others, specify
+            </label>
             <textarea
               rows="1"
               value={data.targetOtherDetails || ""}
@@ -156,15 +242,24 @@ const Target = ({ data, updateData, setStepValidity }) => {
 
         {/* Industries */}
         <div>
-          <label className="block mb-1 text-sm font-medium">
-            Are there specific industries or niches you're targeting?
-          </label>
-          <textarea
-            rows="1"
+          <label className="block mb-1 text-sm font-medium">Industries</label>
+          <select
             value={data.targetIndustries || ""}
-            onChange={handleTextChange("targetIndustries")}
+            onChange={(e) => updateData({ targetIndustries: e.target.value })}
             className="w-full border rounded-md p-2 focus:outline-none focus:ring focus:border-blue-400"
-          />
+          >
+            <option value="">Select industry</option>
+            <option value="Technology">Technology</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Education">Education</option>
+            <option value="Finance">Finance</option>
+            <option value="Retail">Retail</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Real Estate">Real Estate</option>
+            <option value="Travel & Hospitality">Travel & Hospitality</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Logistics">Logistics</option>
+          </select>
         </div>
 
         {/* Pain Points */}

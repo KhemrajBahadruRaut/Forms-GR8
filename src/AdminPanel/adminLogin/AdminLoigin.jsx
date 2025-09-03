@@ -31,7 +31,7 @@ const AdminLogin = () => {
 
     setLoading(true);
     try {
-    //   const res = await fetch("http://localhost/gr8-onboardingform/admin_login/login.php", {
+      // const res = await fetch("http://localhost/gr8-onboardingform/admin_login/login.php", {
       const res = await fetch("https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/admin_login/login.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

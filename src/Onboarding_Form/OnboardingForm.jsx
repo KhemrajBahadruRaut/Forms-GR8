@@ -227,6 +227,7 @@ const OnboardingForm = () => {
     try {
       const businessRes = await fetch(
         "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_business_info/submit_business_info.php",
+        // "http://localhost/gr8-onboardingform/submit_business_info/submit_business_info.php",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -251,8 +252,18 @@ const OnboardingForm = () => {
         { endpoint: "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_content_info/submit_content_info.php", payload: { ...formData, gr8_key: businessId } },
         { endpoint: "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_workflow_info/submit_workflow_info.php", payload: { ...formData, gr8_key: businessId } },
         { endpoint: "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_marketing_info/submit_marketing_info.php", payload: { ...formData, gr8_key: businessId } },
-        { endpoint: "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_additional_info/submit_additional_info.php", payload: { ...data, gr8_key: businessId } },
-      ];
+        { endpoint: "https://onboarding.khemrajbahadurraut.com.np/gr8-onboardingform/submit_additional_info/submit_additional_info.php", payload: { ...data, gr8_key: businessId }},
+      ]
+// const stepsWithKeys = [
+//         { endpoint: "http://localhost/gr8-onboardingform/social_media_info/submit_social_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_goals_info/submit_goals_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_target_info/submit_target_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_brand_voice/submit_brand_voice.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_content_info/submit_content_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_workflow_info/submit_workflow_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_marketing_info/submit_marketing_info.php", payload: { ...formData, gr8_key: businessId } },
+//         { endpoint: "http://localhost/gr8-onboardingform/submit_additional_info/submit_additional_info.php", payload: { ...data, gr8_key: businessId } },
+//       ];
 
       for (let i = 0; i < stepsWithKeys.length; i++) {
         const res = await fetch(stepsWithKeys[i].endpoint, {

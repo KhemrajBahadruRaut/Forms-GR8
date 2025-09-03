@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 
 const Business = ({ data, updateData, setStepValidity }) => {
   const [errors, setErrors] = useState({});
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const debounceRef = useRef(null);
 
-  // Validation rules
+  // ✅ Validation
   const validateField = (name, value) => {
     let error = "";
 
@@ -16,18 +20,8 @@ const Business = ({ data, updateData, setStepValidity }) => {
       }
     }
 
-    if (name === "location") {
-      if (!value) error = "Location is required";
-      else if (!/^[A-Za-z0-9\s.,&'-]+$/.test(value)) {
-        error = "Only letters, numbers & , . & - allowed";
-      }
-    }
-
-    if (name === "zipCode") {
-      if (!value) error = "Zip code is required";
-      else if (!/^\d{1,10}$/.test(value)) {
-        error = "Zip code must be digits only (max 10)";
-      }
+    if (name === "location" && !value) {
+      error = "Location is required";
     }
 
     if (name === "email") {
@@ -44,31 +38,99 @@ const Business = ({ data, updateData, setStepValidity }) => {
       }
     }
 
+    if (name === "contactName" && !value) {
+      error = "Contact name is required";
+    }
+
     setErrors((prev) => ({ ...prev, [name]: error }));
   };
 
-  // Check overall validity whenever data or errors change
+  // ✅ Step validity check
   useEffect(() => {
-    const requiredFields = [
+    const required = [
       "businessName",
       "location",
-      "zipCode",
       "phoneNumber",
       "email",
       "contactName",
       "contactNumber",
     ];
-
-    const isValid = requiredFields.every(
-      (field) => data[field] && !errors[field]
-    );
-
+    const isValid = required.every((f) => data[f] && !errors[f]);
     setStepValidity(isValid);
   }, [data, errors, setStepValidity]);
 
   const handleChange = (name, value) => {
     updateData({ [name]: value });
     validateField(name, value);
+  };
+
+  // ✅ Fetch location suggestions (debounced)
+  const fetchLocations = (query) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      if (query.length < 3) {
+        setSuggestions([]);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+            query
+          )}&addressdetails=1&limit=8`
+        );
+        const data = await res.json();
+        setSuggestions(data);
+        setActiveIndex(-1);
+      } catch (err) {
+        console.error("Location fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+  };
+
+  // ✅ Keyboard navigation for location dropdown
+  const handleKeyDown = (e) => {
+    if (suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) =>
+        prev <= 0 ? suggestions.length - 1 : prev - 1
+      );
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      selectLocation(suggestions[activeIndex]);
+    }
+  };
+
+  // ✅ Select a location
+  const selectLocation = (place) => {
+    handleChange("location", place.display_name);
+    updateData({
+      latitude: place.lat,
+      longitude: place.lon,
+    });
+    setSuggestions([]);
+  };
+
+  // ✅ Highlight matches in suggestions
+  const highlightMatch = (text, query) => {
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.substring(0, idx)}
+        <b>{text.substring(idx, idx + query.length)}</b>
+        {text.substring(idx + query.length)}
+      </>
+    );
   };
 
   return (
@@ -78,72 +140,75 @@ const Business = ({ data, updateData, setStepValidity }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Business Name */}
         <div className="md:col-span-2">
-          <label htmlFor="businessName" className="block mb-1 text-sm font-medium">
-            Business Name
-          </label>
+          <label className="block mb-1 text-sm font-medium">Business Name</label>
           <input
-            id="businessName"
             type="text"
             value={data.businessName || ""}
             onChange={(e) => handleChange("businessName", e.target.value)}
             className="w-full border rounded-md p-2"
             placeholder="Business Name"
           />
-          {errors.businessName && <p className="text-red-500 text-sm">{errors.businessName}</p>}
+          {errors.businessName && (
+            <p className="text-red-500 text-sm">{errors.businessName}</p>
+          )}
         </div>
 
         {/* Location */}
-        <div>
-          <label htmlFor="location" className="block mb-1 text-sm font-medium">
-            Location
-          </label>
+        <div className="md:col-span-2 relative">
+          <label className="block mb-1 text-sm font-medium">Location</label>
           <input
-            id="location"
             type="text"
             value={data.location || ""}
-            onChange={(e) => handleChange("location", e.target.value)}
+            onChange={(e) => {
+              handleChange("location", e.target.value);
+              fetchLocations(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
             className="w-full border rounded-md p-2"
+            placeholder="Search worldwide..."
           />
-          {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
-        </div>
+          {loading && <div className="text-sm text-gray-500">Searching...</div>}
 
-        {/* Zip Code */}
-        <div>
-          <label htmlFor="zipCode" className="block mb-1 text-sm font-medium">
-            Zip Code
-          </label>
-          <input
-            id="zipCode"
-            type="text"
-            value={data.zipCode || ""}
-            onChange={(e) => handleChange("zipCode", e.target.value)}
-            className="w-full border rounded-md p-2"
-          />
-          {errors.zipCode && <p className="text-red-500 text-sm">{errors.zipCode}</p>}
+          {suggestions.length > 0 && (
+            <ul className="absolute z-10 bg-white border rounded-md shadow-lg w-full max-h-56 overflow-y-auto mt-1">
+              {suggestions.map((place, idx) => (
+                <li
+                  key={place.place_id}
+                  onClick={() => selectLocation(place)}
+                  className={`p-2 cursor-pointer ${
+                    idx === activeIndex ? "bg-blue-100" : "hover:bg-gray-100"
+                  }`}
+                >
+                  {highlightMatch(place.display_name, data.location)}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {errors.location && (
+            <p className="text-red-500 text-sm">{errors.location}</p>
+          )}
         </div>
 
         {/* Phone Number */}
         <div>
-          <label htmlFor="phoneNumber" className="block mb-1 text-sm font-medium">
-            Phone Number
-          </label>
+          <label className="block mb-1 text-sm font-medium">Phone Number</label>
           <PhoneInput
             placeholder="Phone number"
             value={data.phoneNumber || ""}
-            onChange={(value) => handleChange("phoneNumber", value)}
+            onChange={(val) => handleChange("phoneNumber", val)}
             defaultCountry="NP"
             className="border rounded-md p-2"
           />
-          {errors.phoneNumber && <p className="text-red-500 text-sm">{errors.phoneNumber}</p>}
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-sm">{errors.phoneNumber}</p>
+          )}
         </div>
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className="block mb-1 text-sm font-medium">
-            Email
-          </label>
+          <label className="block mb-1 text-sm font-medium">Email</label>
           <input
-            id="email"
             type="email"
             value={data.email || ""}
             onChange={(e) => handleChange("email", e.target.value)}
@@ -155,45 +220,48 @@ const Business = ({ data, updateData, setStepValidity }) => {
 
         {/* Website (optional) */}
         <div>
-          <label htmlFor="website" className="block mb-1 text-sm font-medium">
-            Website
-          </label>
+          <label className="block mb-1 text-sm font-medium">Website</label>
           <input
-            id="website"
             type="text"
             value={data.website || ""}
             onChange={(e) => updateData({ website: e.target.value })}
             className="w-full border rounded-md p-2"
+            placeholder="https://example.com"
           />
         </div>
 
         {/* Contact Name */}
         <div>
-          <label htmlFor="contactName" className="block mb-1 text-sm font-medium">
+          <label className="block mb-1 text-sm font-medium">
             Primary Contact Name
           </label>
           <input
-            id="contactName"
             type="text"
             value={data.contactName || ""}
             onChange={(e) => handleChange("contactName", e.target.value)}
             className="w-full border rounded-md p-2"
+            placeholder="John Doe"
           />
+          {errors.contactName && (
+            <p className="text-red-500 text-sm">{errors.contactName}</p>
+          )}
         </div>
 
         {/* Contact Number */}
         <div>
-          <label htmlFor="contactNumber" className="block mb-1 text-sm font-medium">
+          <label className="block mb-1 text-sm font-medium">
             Primary Contact No.
           </label>
           <PhoneInput
             placeholder="Contact number"
             value={data.contactNumber || ""}
-            onChange={(value) => handleChange("contactNumber", value)}
+            onChange={(val) => handleChange("contactNumber", val)}
             defaultCountry="NP"
             className="border rounded-md p-2"
           />
-          {errors.contactNumber && <p className="text-red-500 text-sm">{errors.contactNumber}</p>}
+          {errors.contactNumber && (
+            <p className="text-red-500 text-sm">{errors.contactNumber}</p>
+          )}
         </div>
       </div>
     </section>
